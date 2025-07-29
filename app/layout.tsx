@@ -29,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex bg-gray-700 `}
       >
-        <div className="flex w-80 p-3 h-svh flex-col items-center border-r-2 border-r-gray-200 bg-white/90">
+        <div className="flex max-sm:hidden w-80 p-3 h-svh flex-col items-center border-r-2 border-r-gray-200 bg-white/90">
           <div className="flex w-full items-center p-3 gap-2">
             <BotMessageSquare />
             <h1 className="text-xl font-bold">Brobot Chat</h1>

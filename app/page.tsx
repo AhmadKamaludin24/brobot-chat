@@ -116,12 +116,12 @@ export default function Home() {
         <div className="sticky bottom-0 w-full bg-white border-t p-4">
           <form
             onSubmit={handleSend}
-            className="w-full flex gap-2 max-w-4xl mx-auto"
+            className="w-full flex gap-2 max-w-4xl mx-auto border rounded-lg bg-gray-100 shadow-md p-4"
           >
             <textarea
               onChange={(e) => setInput(e.target.value)}
               value={input}
-              className="w-full min-h-12 max-h-32 resize-none p-4 border rounded-lg focus:outline-none"
+              className="w-full min-h-12 max-h-32 resize-none  border-none rounded-lg focus:outline-none"
               placeholder="Ketik pesanmu di sini..."
             />
             <div className="flex items-start">
