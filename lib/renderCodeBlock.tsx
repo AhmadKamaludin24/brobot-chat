@@ -40,7 +40,7 @@ export const renderCodeBlock = ({
       {String(children).replace(/\n$/, "")}
     </SyntaxHighlighter>
   ) : (
-    <code className="bg-gray-100 text-sm px-1 py-0.5 rounded">{children}</code>
+    <code className="bg-black text-white text-sm px-1 py- rounded">{children}</code>
   );
 };
 

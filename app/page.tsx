@@ -1,7 +1,7 @@
 "use client";
 
 import MarkdownRenderer from "@/lib/renderCodeBlock";
-import { Send } from "lucide-react";
+import { LoaderIcon, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 // Define a shared type for clarity and type safety
@@ -12,6 +12,7 @@ export type ChatMessage = {
 
 export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setloading] = useState(false);
 
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -26,54 +27,62 @@ export default function Home() {
       parts: [{ text: input }],
     };
 
-    const updatedMessages: ChatMessage[] = [...messages, newMessage];
-    setMessages(updatedMessages);
-    setInput("");
-    // Setelah setMessages(updatedMessages);
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "model",
-        parts: [{ text: "" }],
-      },
-    ]);
+    try {
+      setloading(true);
+      const updatedMessages: ChatMessage[] = [...messages, newMessage];
+      setMessages(updatedMessages);
+      setInput("");
+      // Setelah setMessages(updatedMessages);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "model",
+          parts: [{ text: "" }],
+        },
+      ]);
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain",
-      },
-      body: JSON.stringify({ messages: updatedMessages }),
-    });
-
-    if (!response.body) return;
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    let accumulatedText = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      accumulatedText += chunk;
-
-      // Update the last model message with streaming text
-      setMessages((prevMessages) => {
-        const updated = [...prevMessages];
-        const lastIndex = updated.length - 1;
-
-        updated[lastIndex] = {
-          ...updated[lastIndex],
-          parts: [{ text: accumulatedText }],
-        };
-
-        return updated;
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+        body: JSON.stringify({ messages: updatedMessages }),
       });
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let accumulatedText = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedText += chunk;
+
+        // Update the last model message with streaming text
+        setMessages((prevMessages) => {
+          const updated = [...prevMessages];
+          const lastIndex = updated.length - 1;
+
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            parts: [{ text: accumulatedText }],
+          };
+
+          return updated;
+        });
+      }
+      console.log("Streaming complete:", accumulatedText);
+    } catch (error) {
+      console.log(error);
+      setloading(false);
+    } finally {
+      setloading(false);
     }
-    console.log("Streaming complete:", accumulatedText);
   };
 
   useEffect(() => {
@@ -100,12 +109,16 @@ export default function Home() {
                 className={`p-4 rounded-2xl whitespace-pre-line ${
                   m.role === "user"
                     ? "max-w-[75%] bg-gray-200 text-black"
-                    : "max-w-[100%]  text-black"
+                    : "max-w-[100%] text-black"
                 }`}
               >
-                <div className="prose dark:prose-invert max-w-none">
-                  <MarkdownRenderer content={m.parts[0]?.text || ""} />
-                </div>
+                {m.role === "model" ? (
+                  <div className="prose dark:prose-invert max-w-none">
+                    <MarkdownRenderer content={m.parts[0]?.text || ""} />
+                  </div>
+                ) : (
+                  <div>{m.parts[0]?.text || ""}</div>
+                )}
               </div>
             </div>
           ))}
@@ -122,15 +135,19 @@ export default function Home() {
               onChange={(e) => setInput(e.target.value)}
               value={input}
               className="w-full min-h-12 max-h-32 resize-none  border-none rounded-lg focus:outline-none"
-              placeholder="Ketik pesanmu di sini..."
+              placeholder="Ketik pesanmu di sini..." 
             />
             <div className="flex items-start">
               <button
                 type="submit"
-                disabled={!input.trim()}
+                disabled={!input.trim() || loading}
                 className="p-2 bg-black rounded-full hover:bg-gray-800 transition"
               >
-                <Send className="text-white w-5 h-5" />
+                {loading ? (
+                  <span className="animate-spin text-white"><LoaderIcon className="animate-spin" /></span>
+                ) : (
+                  <Send className="text-white" />
+                )}
               </button>
             </div>
           </form>
