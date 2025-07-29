@@ -1,103 +1,141 @@
-import Image from "next/image";
+"use client";
+
+import MarkdownRenderer from "@/lib/renderCodeBlock";
+import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+// Define a shared type for clarity and type safety
+export type ChatMessage = {
+  role: "user" | "model";
+  parts: { text: string }[];
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!input.trim()) return;
+
+    const newMessage: ChatMessage = {
+      role: "user",
+      parts: [{ text: input }],
+    };
+
+    const updatedMessages: ChatMessage[] = [...messages, newMessage];
+    setMessages(updatedMessages);
+    setInput("");
+    // Setelah setMessages(updatedMessages);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "model",
+        parts: [{ text: "" }],
+      },
+    ]);
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain",
+      },
+      body: JSON.stringify({ messages: updatedMessages }),
+    });
+
+    if (!response.body) return;
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    let accumulatedText = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      accumulatedText += chunk;
+
+      // Update the last model message with streaming text
+      setMessages((prevMessages) => {
+        const updated = [...prevMessages];
+        const lastIndex = updated.length - 1;
+
+        updated[lastIndex] = {
+          ...updated[lastIndex],
+          parts: [{ text: accumulatedText }],
+        };
+
+        return updated;
+      });
+    }
+    console.log("Streaming complete:", accumulatedText);
+  };
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  return (
+    <main className="relative max-h-screen w-full overflow-x-scroll bg-white">
+      <div className="max-w-4xl mx-auto min-h-screen flex flex-col justify-between">
+        {/* Chat Area */}
+        <div className="pt-24 relative px-4 flex-1 overflow-y-auto space-y-4">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={`flex w-full ${
+                m.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`p-4 rounded-2xl whitespace-pre-line ${
+                  m.role === "user"
+                    ? "max-w-[75%] bg-gray-200 text-black"
+                    : "max-w-[100%]  text-black"
+                }`}
+              >
+                <div className="prose dark:prose-invert max-w-none">
+                  <MarkdownRenderer content={m.parts[0]?.text || ""} />
+                </div>
+              </div>
+            </div>
+          ))}
+          <div ref={bottomRef} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {/* Input Area */}
+        <div className="sticky bottom-0 w-full bg-white border-t p-4">
+          <form
+            onSubmit={handleSend}
+            className="w-full flex gap-2 max-w-4xl mx-auto"
+          >
+            <textarea
+              onChange={(e) => setInput(e.target.value)}
+              value={input}
+              className="w-full min-h-12 max-h-32 resize-none p-4 border rounded-lg focus:outline-none"
+              placeholder="Ketik pesanmu di sini..."
+            />
+            <div className="flex items-start">
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className="p-2 bg-black rounded-full hover:bg-gray-800 transition"
+              >
+                <Send className="text-white w-5 h-5" />
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
   );
 }
