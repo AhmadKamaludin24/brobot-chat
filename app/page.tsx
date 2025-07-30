@@ -149,12 +149,12 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <main className="relative max-h-screen w-full overflow-y-scroll bg-white">
+    <main className="relative max-h-svh w-full overflow-y-scroll bg-white">
       <div className="fixed top-0 w-full px-2 py-4 flex gap-2 border-b-2 border-gray-200 bg-white z-50">
         <BotIcon />
         <h1 className="text-lg font-bold">Brobot Chat</h1>
       </div>
-      <div className="max-w-4xl mx-auto min-h-screen flex flex-col justify-between">
+      <div className="max-w-4xl mx-auto min-h-svh flex flex-col justify-between">
         {/* Chat Area */}
         <div className="pt-24 relative px-4 flex-1 overflow-y-auto  space-y-4">
           {messages.map((m, i) => (
