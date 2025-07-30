@@ -214,7 +214,7 @@ export default function Home() {
         </div>
 
         {/* Input Area */}
-        <div className="sticky bottom-0 w-full bg-white border-t p-4">
+        <div className="fixed bottom-0 w-full bg-white border-t p-4">
           <form
             onSubmit={handleSend}
             className="w-full flex gap-2 max-w-4xl mx-auto border rounded-lg bg-gray-100 border-b-4 border-black p-4"
