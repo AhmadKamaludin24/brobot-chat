@@ -108,7 +108,7 @@ export default function MarkdownRenderer({ content }: Props) {
           <li className="text-sm leading-relaxed">{children}</li>
         ),
          a: ({ children, href }) => (
-          <a href={href} style={{cursor: "pointer"}} className="text-sm leading-relaxed cursor-pointer p-2 rounded-2xl bg-black text-white">{children}</a>
+          <a href={href} style={{cursor: "pointer",}} className="text-sm leading-relaxed cursor-pointer  p-2 rounded-2xl bg-black text-white">{children}</a>
         ),
         h1: ({ children }) => (
           <h1
