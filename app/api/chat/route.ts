@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  console.log(messages)
+  console.log(JSON.stringify(messages, null, 2))
 
   return new Response(readableStream, {
     headers: {
