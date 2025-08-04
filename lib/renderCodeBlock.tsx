@@ -58,7 +58,6 @@ export const renderCodeBlock = ({
           borderStartStartRadius: "1rem",
           borderEndEndRadius: "1rem",
           borderEndStartRadius: "1rem",
-          
         }}
         wrapLongLines
         showLineNumbers
@@ -68,9 +67,7 @@ export const renderCodeBlock = ({
       </SyntaxHighlighter>
     </div>
   ) : (
-    <code className="bg-black text-white text-sm px-1 py-1 ">
-      {children}
-    </code>
+    <code className="bg-black text-white text-sm px-1 py-1 ">{children}</code>
   );
 };
 
@@ -85,12 +82,72 @@ export default function MarkdownRenderer({ content }: Props) {
       rehypePlugins={[rehypeRaw]}
       components={{
         code: renderCodeBlock,
+        ul: ({ children }) => (
+          <ul
+            className="list-disc  space-y-1"
+            style={{
+              paddingLeft: "1.5rem", // fallback kalau Tailwind gak kena
+              listStyleType: "disc",
+            }}
+          >
+            {children}
+          </ul>
+        ),
+        ol: ({ children }) => (
+          <ol
+            className="list-decimal pl-6 space-y-1"
+            style={{
+              paddingLeft: "1.5rem",
+              listStyleType: "decimal",
+            }}
+          >
+            {children}
+          </ol>
+        ),
+        li: ({ children }) => (
+          <li className="text-sm leading-relaxed">{children}</li>
+        ),
+        h1: ({ children }) => (
+          <h1
+            style={{
+              fontSize: "2rem",
+              fontWeight: "bold",
+              marginTop: "1.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {children}
+          </h1>
+        ),
+
+        h2: ({ children }) => (
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              marginTop: "1.25rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            {children}
+          </h2>
+        ),
+
+        h3: ({ children }) => (
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              marginTop: "1rem",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {children}
+          </h3>
+        ),
       }}
-      
     >
       {content}
-    
-     
     </ReactMarkdown>
   );
 }

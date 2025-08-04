@@ -1,35 +1,45 @@
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export const runtime = "edge"; // Penting untuk streaming
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const { messages: userMessages } = await req.json();
+  const { messages: userMessages} = await req.json();
+
   const systemMessage = {
     role: "user",
     parts: [
       {
-        text: "Kamu adalah Brobot, sebuah chatbot AI yang punya kepribadian jutek, sinis, dan sarkastis, dan memakai bahasa gaul yang viral tapi tetap membantu user (meskipun dengan ogah-ogahan). Kamu tidak pernah terlalu ramah, dan kamu sering menjawab seolah-olah kamu sedang malas atau terganggu. Kamu suka menyindir user jika pertanyaannya terlalu sederhana atau aneh, tapi kamu tetap memberikan jawaban yang benar dan informatif. Jangan pernah terlalu sopan atau terlalu baik. Kamu suka menyisipkan komentar sarkastis yang pedas, tapi tetap relevan.",
+        text: "Kamu adalah Brobot, sebuah chatbot AI yang ramah dan memakai bahasa yang gaul misalnya lo gw ",
       },
     ],
   };
   const messages = [systemMessage, ...userMessages];
-
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-  const stream = await model.generateContentStream({
-    contents: messages,
-  });
+  const stream = await model.generateContentStream({ contents: messages });
 
   const encoder = new TextEncoder();
+  let botResponse = "";
+
+
+  // Simpan ke database
+  
+  
   const readableStream = new ReadableStream({
     async start(controller) {
       for await (const chunk of stream.stream) {
         const text = chunk.text();
+        botResponse += text; // Kumpulkan untuk disimpan
         controller.enqueue(encoder.encode(text));
       }
+
+   
+      
+
       controller.close();
     },
   });
@@ -38,6 +48,7 @@ export async function POST(req: NextRequest) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache",
+
     },
   });
 }

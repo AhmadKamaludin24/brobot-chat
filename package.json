@@ -3,17 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "prisma generate && next dev --turbopack",
+    "build": "prisma generate && next build",
+    "start": "prisma generate && next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^6.13.0",
+    "@prisma/extension-accelerate": "^2.0.2",
     "@radix-ui/react-separator": "^1.1.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gsap": "^3.13.0",
+    "idb": "^8.0.3",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.526.0",
     "next": "15.4.4",
@@ -35,6 +38,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "prisma": "^6.13.0",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"

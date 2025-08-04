@@ -1,8 +1,10 @@
 "use client";
 
+import { clearMessages, loadMessages, saveMessages } from "@/lib/indexDB";
 import botLoading from "@/lib/lottie/loading bot.json";
 import MarkdownRenderer from "@/lib/renderCodeBlock";
 import { cn } from "@/lib/utils";
+import { METHODS } from "http";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import {
   BotIcon,
@@ -16,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 
 // Define a shared type for clarity and type safety
 export type ChatMessage = {
-  role: "user" | "model";
+  role: "user" | "assistant";
   parts: { text: string }[];
 };
 
@@ -31,6 +33,21 @@ export default function Home() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const lottieRef = useRef<LottieRefCurrentProps>(null);
+  const sessionId = "my-session";
+
+  useEffect(() => {
+    const load = async () => {
+      const stored = await loadMessages(sessionId);
+      setMessages(stored);
+    };
+    load();
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessages(sessionId, messages);
+    }
+  }, [messages, sessionId]);
 
   useEffect(() => {
     // Initialize Lottie animation
@@ -46,6 +63,11 @@ export default function Home() {
     }
   }, [loading, lottieRef]); // Ensure this runs only once when the component mounts
 
+  const handleReset = async () => {
+    await clearMessages(sessionId)
+    window.location.reload()
+  };
+
   const handleCopy = async (text: string) => {
     try {
       setCoopy(true);
@@ -59,8 +81,7 @@ export default function Home() {
     }
   };
 
-  const handleSend = async ( e: React.FormEvent ) => {
-
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!input.trim()) return;
@@ -72,6 +93,7 @@ export default function Home() {
 
     try {
       setloading(true);
+
       const updatedMessages: ChatMessage[] = [...messages, newMessage];
       setMessages(updatedMessages);
       setInput("");
@@ -79,7 +101,7 @@ export default function Home() {
       setMessages((prev) => [
         ...prev,
         {
-          role: "model",
+          role: "assistant",
           parts: [{ text: "" }],
         },
       ]);
@@ -132,6 +154,7 @@ export default function Home() {
           return updated;
         });
       }
+
       console.log("Streaming complete:", accumulatedText);
     } catch (error) {
       console.log(error);
@@ -141,8 +164,7 @@ export default function Home() {
     }
   };
 
-  const handleSendWelcome = async ( input: string ) => {
-
+  const handleSendWelcome = async (input: string) => {
     if (!input.trim()) return;
 
     const newMessage: ChatMessage = {
@@ -159,7 +181,7 @@ export default function Home() {
       setMessages((prev) => [
         ...prev,
         {
-          role: "model",
+          role: "assistant",
           parts: [{ text: "" }],
         },
       ]);
@@ -220,7 +242,6 @@ export default function Home() {
       setloading(false);
     }
   };
-  
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -232,10 +253,14 @@ export default function Home() {
 
   return (
     <main className="relative max-h-svh w-full overflow-y-scroll bg-white">
-      <div className="fixed top-0 w-full px-2 py-4 flex gap-2 border-b-2 border-black bg-gray-200 z-50">
-        <BotIcon />
-        <h1 className="text-lg font-bold">Brobot Chat</h1>
+      <div className="fixed top-0 w-full px-2 py-4 flex justify-between gap-2 border-b-2 border-black bg-gray-200 z-50">
+       <div className="flex text-2xl items-center gap-2"> 
+          <BotIcon className="text-2xl"/>
+          <h1 className="font-bold">Brobot Chat</h1>
+        </div>
+        <button onClick={()=>handleReset()} className="text-sm font-bold text-center p-2 bg-red-400 rounded-2xl border border-l-4 border-b-4 border-black">Clear messages</button>
       </div>
+      
       <div className="max-w-4xl mx-auto min-h-svh flex flex-col relative justify-between items-center">
         {messages.length < 1 ? (
           <>
@@ -248,12 +273,34 @@ export default function Home() {
                   <h1>what can i help u with?</h1>
                   <div className="h-full w-full mt-2 flex flex-col items-center justify-center gap-2">
                     <div className="flex w-full justify-between gap-4">
-                      <button onClick={() => handleSendWelcome("ide konten")} className="p-2 border w-1/2 border-l-4 border-b-4 border-black rounded-lg">Ide konten</button>
-                      <button onClick={() => handleSendWelcome("Rekomendasi Film")} className="p-2 border w-1/2 border-l-4 border-b-4 border-black rounded-lg">Rekomendasi Film</button>
+                      <button
+                        onClick={() => handleSendWelcome("ide konten")}
+                        className="p-2 bg-white border w-1/2 border-l-4 border-b-4 border-black rounded-lg"
+                      >
+                        Ide konten
+                      </button>
+                      <button
+                        onClick={() => handleSendWelcome("Rekomendasi Film")}
+                        className="p-2 bg-white border w-1/2 border-l-4 border-b-4 border-black rounded-lg"
+                      >
+                        Rekomendasi Film
+                      </button>
                     </div>
                     <div className="flex w-full justify-between gap-4">
-                      <button onClick={() => handleSendWelcome("Selesaikan Tugas Coding")} className="p-2 border w-1/2 border-l-4 border-b-4 border-black rounded-lg">Selesaikan Tugas Coding</button>
-                      <button onClick={() => handleSendWelcome("Tanya Jawab")} className="p-2 border w-1/2 border-l-4 border-b-4 border-black rounded-lg">Tanya Jawab</button>
+                      <button
+                        onClick={() =>
+                          handleSendWelcome("Selesaikan Tugas Coding")
+                        }
+                        className="p-2 bg-white border w-1/2 border-l-4 border-b-4 border-black rounded-lg"
+                      >
+                        Selesaikan Tugas Coding
+                      </button>
+                      <button
+                        onClick={() => handleSendWelcome("Kode HTML sederhana")}
+                        className="p-2 bg-white border w-1/2 border-l-4 border-b-4 border-black rounded-lg"
+                      >
+                        Kode HTML sederhana
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -261,7 +308,7 @@ export default function Home() {
             </div>
           </>
         ) : (
-          <div className="py-24 w-full max-w-4xl relative px-4 flex-1 overflow-y-auto space-y-4">
+          <div className="py-24 w-full max-w-4xl relative px-2 flex-1 overflow-y-auto space-y-4">
             {messages.map((m, i) => (
               <div
                 key={i}
@@ -276,7 +323,7 @@ export default function Home() {
                       : "max-w-[100%] text-black "
                   }`}
                 >
-                  {m.role === "model" ? (
+                  {m.role === "assistant" ? (
                     <div>
                       {i === messages.length - 1 && loading ? (
                         <div className="w-[90px]  rounded-2xl p-4 bg-amber-500  border-2 border-l-4 border-black border-b-4 ">
